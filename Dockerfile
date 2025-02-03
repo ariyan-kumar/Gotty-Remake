@@ -1,23 +1,17 @@
-FROM ubuntu:20.04
-LABEL maintainer="wingnut0310 <wingnut0310@gmail.com>"
+# Use a minimal Alpine-based Go image
+FROM golang:1.20-alpine
 
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV GOTTY_TAG_VER v1.0.1
+# Set the working directory inside the container
+WORKDIR /app
 
-RUN apt-get -y update && \
-    apt-get install -y curl && \
-    curl -sLk https://github.com/yudai/gotty/releases/download/${GOTTY_TAG_VER}/gotty_linux_amd64.tar.gz \
-    | tar xzC /usr/local/bin && \
-    apt-get purge --auto-remove -y curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists*
+# Install dependencies and build GoTTY
+RUN apk add --no-cache git make gcc libc-dev \
+    && git clone https://github.com/yudai/gotty.git /app/gotty \
+    && cd /app/gotty \
+    && make build
 
-
-COPY /run_gotty.sh /run_gotty.sh
-
-RUN chmod 744 /run_gotty.sh
-
+# Expose port 8080 for Choreo
 EXPOSE 8080
 
-CMD ["/bin/bash","/run_gotty.sh"]
+# Run GoTTY on port 8080 and bind to all interfaces
+CMD ["/app/gotty/gotty", "-w", "-p", "8080", "--address", "0.0.0.0", "bash"]
