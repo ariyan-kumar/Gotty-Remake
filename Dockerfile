@@ -10,8 +10,15 @@ RUN apk add --no-cache git make gcc libc-dev \
     && cd /app/gotty \
     && make build
 
-# Expose port 8080 for Choreo
+# Create a non-root user
+RUN addgroup -S gottygroup && adduser -S gottyuser -G gottygroup
+
+# Change ownership and set user
+RUN chown -R gottyuser:gottygroup /app
+USER gottyuser
+
+# Expose port 8080
 EXPOSE 8080
 
-# Run GoTTY on port 8080 and bind to all interfaces
+# Run GoTTY securely as non-root user
 CMD ["/app/gotty/gotty", "-w", "-p", "8080", "--address", "0.0.0.0", "bash"]
